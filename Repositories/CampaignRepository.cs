@@ -1,0 +1,67 @@
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using PromoPilot.Core.Entities;
+using PromoPilot.Core.Interfaces;
+using PromoPilot.Infrastructure.Data;
+
+namespace PromoPilot.Infrastructure.Repositories
+{
+    public class CampaignRepository : ICampaignRepository
+    {
+        private readonly PromoPilotDbContext _context;
+
+        public CampaignRepository(PromoPilotDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<Campaign>> GetAllAsync()
+        {
+            return await _context.Campaigns.ToListAsync();
+        }
+
+        public async Task<Campaign> GetByIdAsync(int id)
+        {
+            return await _context.Campaigns.FindAsync(id);
+        }
+
+        public async Task AddAsync(Campaign campaign)
+        {
+            await _context.Campaigns.AddAsync(campaign);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<Campaign> GetByNameAndDatesAsync(string name, DateTime start, DateTime end)
+        {
+            return await _context.Campaigns
+                .FirstOrDefaultAsync(c => c.Name == name && c.StartDate == start && c.EndDate == end);
+        }
+
+
+        public async Task UpdateAsync(Campaign campaign)
+        {
+            var existing = await _context.Campaigns.FindAsync(campaign.CampaignId);
+            if (existing != null)
+            {
+                existing.Name = campaign.Name;
+                existing.StartDate = campaign.StartDate;
+                existing.EndDate = campaign.EndDate;
+                existing.TargetProducts = campaign.TargetProducts;
+                existing.StoreList = campaign.StoreList;
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
+
+        public async Task DeleteAsync(int id)
+        {
+            var entity = await _context.Campaigns.FindAsync(id);
+            if (entity != null)
+            {
+                _context.Campaigns.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+        }
+    }
+}
